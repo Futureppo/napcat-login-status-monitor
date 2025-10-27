@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.api.ApkVariantOutputImpl
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,7 +19,16 @@ android {
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        resourceConfigurations += listOf("zh", "en")
+    }
+
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore.jks")
+            storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+        }
     }
 
     buildTypes {
@@ -28,7 +39,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -52,6 +63,7 @@ android {
             )
         }
     }
+
     splits {
         abi {
             isEnable = true
@@ -60,7 +72,26 @@ android {
             isUniversalApk = false
         }
     }
+
+    @Suppress("DEPRECATION")
+    applicationVariants.all {
+        outputs.forEach { output ->
+            val apkOutput = output as? ApkVariantOutputImpl
+            if (apkOutput != null) {
+                val abiFilter = apkOutput.filters.find { it.filterType == "ABI" }?.identifier
+                if (abiFilter != null) {
+                    val baseVersionCode = defaultConfig.versionCode ?: 0
+                    apkOutput.versionCodeOverride = when (abiFilter) {
+                        "armeabi-v7a" -> 1000 + baseVersionCode // 32位版本: 1001
+                        "arm64-v8a"   -> 2000 + baseVersionCode // 64位版本: 2001
+                        else -> apkOutput.versionCodeOverride
+                    }
+                }
+            }
+        }
+    }
 }
+
 
 kotlin {
     jvmToolchain(17)
@@ -70,12 +101,12 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)
     //implementation(libs.androidx.appcompat)
-    implementation(libs.material) 
+    implementation(libs.material)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    // implementation(libs.androidx.compose.material.icons.extended) 
+    // implementation(libs.androidx.compose.material.icons.extended)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
