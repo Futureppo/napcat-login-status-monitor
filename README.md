@@ -1,6 +1,6 @@
 ## 项目简介
 
-Napcat Login Status Monitor 是一个使用 Kotlin、Jetpack Compose、WorkManager 与 MVVM 架构实现的原生 Android 应用。用于定时监控后端接口状态，在检测到掉线时发送高重要级通知提醒。
+Napcat Login Status Monitor 是一个使用 Kotlin、Jetpack Compose、WorkManager 与 MVVM 架构实现的原生 Android 应用。用于定时监控后端接口状态，在检测到掉线时发送通知提醒。
 支持系统：Android 12及以上。
 
 
