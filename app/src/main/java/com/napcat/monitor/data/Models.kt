@@ -10,7 +10,8 @@ data class MonitorItem(
     val token: String,
     val intervalSec: Int,
     val enabled: Boolean,
-    val lastStatus: String = "Online"
+    val lastStatus: String = "Online",
+    val lastUin: String? = null
 )
 
 

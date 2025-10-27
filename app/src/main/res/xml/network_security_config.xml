@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 允许 http 明文流量，便于局域网/本地端口联调。生产请改为 https。 -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
+
+

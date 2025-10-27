@@ -8,10 +8,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.ExistingWorkPolicy
+import androidx.work.workDataOf
 import com.napcat.monitor.data.PrefKeys
 import com.napcat.monitor.data.dataStore
 import com.napcat.monitor.data.readMonitorsFlow
@@ -49,7 +54,6 @@ class MainViewModel(
 
         val request = PeriodicWorkRequestBuilder<ApiStatusCheckWorker>(15, TimeUnit.MINUTES)
             .setConstraints(constraints)
-            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
 
         workManager.enqueueUniquePeriodicWork(
@@ -57,6 +61,22 @@ class MainViewModel(
             ExistingPeriodicWorkPolicy.KEEP,
             request
         )
+
+        // 按每个监控的 intervalSec 单独调度（OneTime 链式），并立即触发一次
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = monitorsFlow.first()
+            list.filter { it.enabled }.forEach { m ->
+                val now = OneTimeWorkRequestBuilder<ApiStatusCheckWorker>()
+                    .setInputData(workDataOf("monitorId" to m.id))
+                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .build()
+                workManager.enqueueUniqueWork(
+                    "api_monitor_" + m.id,
+                    ExistingWorkPolicy.REPLACE,
+                    now
+                )
+            }
+        }
     }
 
     // 停止周期监控任务
