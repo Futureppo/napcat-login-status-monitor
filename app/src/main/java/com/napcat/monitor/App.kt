@@ -7,6 +7,7 @@ class App : Application() {
         super.onCreate()
         // 初始化通知
         NotificationHelper.ensureChannels(this)
+        com.napcat.monitor.network.HttpClientProvider.client
     }
 }
 

@@ -51,7 +51,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.ui.Modifier
-// 键盘选项可选，避免额外依赖
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.napcat.monitor.data.readApiUrlFlow
@@ -91,6 +90,7 @@ fun MainScreen(vm: MainViewModel = viewModel(factory = MainViewModel.Factory(and
     var showSheet by remember { mutableStateOf(false) }
     var api by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
+    var uin by remember { mutableStateOf("") }
     var interval by remember { mutableStateOf("60") }
     var enabled by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
@@ -123,6 +123,7 @@ fun MainScreen(vm: MainViewModel = viewModel(factory = MainViewModel.Factory(and
                 Text(text = "添加监控")
                 OutlinedTextField(value = api, onValueChange = { api = it }, label = { Text("API 地址") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = token, onValueChange = { token = it }, label = { Text("Token") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = uin, onValueChange = { uin = it.filter { ch -> ch.isDigit() } }, label = { Text("QQ 号") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = interval, onValueChange = { interval = it.filter { ch -> ch.isDigit() }.ifBlank { "0" } }, label = { Text("查询间隔(秒)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("是否开启")
@@ -136,11 +137,12 @@ fun MainScreen(vm: MainViewModel = viewModel(factory = MainViewModel.Factory(and
                         val apiTrim = api.trim()
                         val tokenTrim = token.trim()
                         val sec = interval.toIntOrNull() ?: 0
-                        if (apiTrim.isEmpty() || tokenTrim.isEmpty() || sec <= 0) {
-                            Toast.makeText(context, "请填写有效的地址/Token/间隔(>0)", Toast.LENGTH_SHORT).show()
+                        val uinTrim = uin.trim()
+                        if (apiTrim.isEmpty() || tokenTrim.isEmpty() || uinTrim.isEmpty() || sec <= 0) {
+                            Toast.makeText(context, "请填写有效的地址/Token/QQ号/间隔(>0)", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
-                        vm.addOrUpdateMonitor(null, apiTrim, tokenTrim, sec, enabled)
+                        vm.addOrUpdateMonitor(null, apiTrim, tokenTrim, uinTrim, sec, enabled)
                         scope.launch { saveApiUrl(context, apiTrim) }
                         showSheet = false
                     }, contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)) { Text("保存") }
@@ -153,7 +155,7 @@ fun MainScreen(vm: MainViewModel = viewModel(factory = MainViewModel.Factory(and
 
 @Composable
 private fun MonitorCard(item: com.napcat.monitor.data.MonitorItem, onClick: () -> Unit) {
-    val uin = item.lastUin ?: "1946275451"
+    val uin = if (item.uin.isNotBlank()) item.uin else (item.lastUin ?: "1946275451")
     val avatarUrl = "http://q.qlogo.cn/headimg_dl?dst_uin=$uin&spec=640&img_type=jpg"
     Card(
         onClick = onClick,

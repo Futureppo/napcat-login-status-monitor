@@ -40,8 +40,6 @@ class MainViewModel(
     private val _status = MutableStateFlow("Unknown")
     val status: StateFlow<String> = _status.asStateFlow()
 
-    // 读取存储的 API URL（用于 Compose 显示）
-    val apiUrlFlow = dataStore.data.map { it[PrefKeys.API_URL] ?: "" }
     val monitorsFlow = readMonitorsFlow(app)
 
     // 启动周期监控任务（15 分钟），并配置为加急工作（超额则按普通执行）
@@ -77,10 +75,7 @@ class MainViewModel(
         }
     }
 
-    // 停止周期监控任务
-    fun stopMonitoring() {
-        workManager.cancelUniqueWork("api_status_check")
-    }
+
 
     // 将 DataStore 中的最后状态同步到 UI
     fun updateStatusFromStore() {
@@ -102,7 +97,7 @@ class MainViewModel(
     }
 
     // 添加或更新监控项，并启动周期任务
-    fun addOrUpdateMonitor(id: String?, apiUrl: String, token: String, intervalSec: Int, enabled: Boolean) {
+    fun addOrUpdateMonitor(id: String?, apiUrl: String, token: String, uin: String, intervalSec: Int, enabled: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             val list = readMonitorsFlow(app).first()
             val newId = id ?: java.util.UUID.randomUUID().toString()
@@ -110,11 +105,21 @@ class MainViewModel(
                 id = newId,
                 apiUrl = apiUrl,
                 token = token,
+                uin = uin,
                 intervalSec = intervalSec,
                 enabled = enabled
             )
             saveMonitors(app, updated)
             startMonitoring()
+        }
+    }
+
+    fun deleteMonitor(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = readMonitorsFlow(app).first()
+            val updated = list.filterNot { it.id == id }
+            saveMonitors(app, updated)
+            workManager.cancelUniqueWork("api_monitor_" + id)
         }
     }
 }

@@ -14,18 +14,21 @@ android {
         minSdk = 31
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        resourceConfigurations += listOf("zh", "en")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -37,7 +40,19 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = false
     }
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/LICENSE*",
+                "META-INF/AL2.0",
+                "META-INF/LGPL2.1",
+                "META-INF/*.kotlin_module"
+            )
+        }
+    }
+    // 建议使用 App Bundle 方式进行设备拆分；移除过时的 splits.density/abi 配置以避免构建告警
 }
 
 kotlin {
@@ -47,13 +62,13 @@ kotlin {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
+    //implementation(libs.androidx.appcompat)
+    implementation(libs.material) 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.extended)
+    // implementation(libs.androidx.compose.material.icons.extended) 
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
@@ -61,10 +76,10 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.scalars)
+    //implementation(libs.retrofit)
+    //implementation(libs.retrofit.converter.scalars)
     implementation(libs.okhttp)
-    implementation(libs.okhttp.logging)
+    debugImplementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
     testImplementation(libs.junit)

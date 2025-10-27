@@ -1,3 +1,24 @@
+
+-keepclassmembers class ** implements kotlinx.serialization.KSerializer { *; }
+-keep,includedescriptorclasses class **$$serializer { *; }
+-keepclassmembers class ** {
+    @kotlinx.serialization.SerialName <fields>;
+}
+
+
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+
+# WorkManager 反射任务名
+-keep class androidx.work.impl.foreground.SystemForegroundService { *; }
+-keep class com.napcat.monitor.worker.** { *; }
+
+# Coil
+-dontwarn coil.**
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.

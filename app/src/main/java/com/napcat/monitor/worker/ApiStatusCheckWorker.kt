@@ -49,12 +49,12 @@ class ApiStatusCheckWorker(
             val updatedAll = mutableListOf<MonitorItem>()
             for (m in monitors) {
                 if (!m.enabled) { updatedAll.add(m); continue }
-                val result = checkApiAndUin(m.apiUrl, m.token)
+                val result = checkApi(m.apiUrl, m.token)
                 val currentStatus = if (result.first == true) "Online" else "Offline"
                 if (currentStatus == "Offline" && m.lastStatus == "Online") {
                     NotificationHelper.sendApiDownNotification(applicationContext)
                 }
-                updatedAll.add(m.copy(lastStatus = currentStatus, lastUin = result.second ?: m.lastUin))
+                updatedAll.add(m.copy(lastStatus = currentStatus))
             }
             saveMonitors(applicationContext, updatedAll)
             return Result.success()
@@ -66,12 +66,12 @@ class ApiStatusCheckWorker(
                 // 已关闭则不再调度
                 return Result.success()
             }
-            val result = checkApiAndUin(current.apiUrl, current.token)
+            val result = checkApi(current.apiUrl, current.token)
             val status = if (result.first == true) "Online" else "Offline"
             if (status == "Offline" && current.lastStatus == "Online") {
                 NotificationHelper.sendApiDownNotification(applicationContext)
             }
-            val updated = monitors.map { m -> if (m.id == monitorId) m.copy(lastStatus = status, lastUin = result.second ?: m.lastUin) else m }
+            val updated = monitors.map { m -> if (m.id == monitorId) m.copy(lastStatus = status) else m }
             saveMonitors(applicationContext, updated)
 
             // 重新按 intervalSec 调度下一次
@@ -95,17 +95,13 @@ class ApiStatusCheckWorker(
         return ForegroundInfo(1001, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     }
 
-    private suspend fun checkApiAndUin(baseUrl: String, token: String): Pair<Boolean?, String?> = withContext(Dispatchers.IO) {
+    private suspend fun checkApi(baseUrl: String, token: String): Pair<Boolean?, String?> = withContext(Dispatchers.IO) {
         try {
-            val client = OkHttpClient.Builder()
-                .connectTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
-                .build()
+            val client = com.napcat.monitor.network.HttpClientProvider.client
             val credential = loginAndGetCredential(client, baseUrl, token)
             if (credential.isNullOrBlank()) return@withContext (false to null)
-            val info = queryLoginInfo(client, baseUrl, credential)
-            return@withContext (info?.first to info?.second)
+            val online = queryLoginInfoOnline(client, baseUrl, credential)
+            return@withContext (online to null)
         } catch (t: Throwable) {
             false to null
         }
@@ -160,7 +156,7 @@ class ApiStatusCheckWorker(
     }
 
     // 查询在线状态，返回 true=在线 / false=离线 / null=未知
-    private fun queryLoginInfo(client: OkHttpClient, baseUrl: String, credentialB64: String): Pair<Boolean?, String?>? {
+    private fun queryLoginInfoOnline(client: OkHttpClient, baseUrl: String, credentialB64: String): Boolean? {
         val url = joinUrl(baseUrl, "/api/QQLogin/GetQQLoginInfo")
         val body: RequestBody = "".toRequestBody(null)
         val req = Request.Builder()
@@ -174,8 +170,7 @@ class ApiStatusCheckWorker(
             val root = runCatching { Json.parseToJsonElement(text) }.getOrNull() as? JsonObject ?: return null
             val data = root["data"] as? JsonObject ?: return null
             val online = data["online"]?.jsonPrimitive?.booleanOrNull
-            val uin = data["uin"]?.jsonPrimitive?.contentOrNull
-            return (online to uin)
+            return online
         }
     }
 }
