@@ -26,7 +26,7 @@ android {
         create("release") {
             val storeFilePath = (findProperty("SIGNING_STORE_FILE") as String?)
                 ?: (findProperty("RELEASE_STORE_FILE") as String?)
-                ?: (findProperty("keystone.jks") as String?)
+                ?: (findProperty("key.jks") as String?)
                 ?: "key.jks"
             storeFile = file(storeFilePath)
 
