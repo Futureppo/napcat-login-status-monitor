@@ -25,12 +25,10 @@ jobs:
       - name: Prepare keystore and gradle.properties
         shell: bash
         run: |
-          # 写入签名文件 key.jks（来自仓库 Secrets 的 base64）
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
             echo "Decoding keystore from secrets"
             echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > key.jks
           fi
-          # 写入签名配置到 gradle.properties（与 app/build.gradle.kts 读取逻辑匹配）
           {
             echo "SIGNING_STORE_FILE=key.jks"
             echo "SIGNING_STORE_PASSWORD=${{ secrets.SIGNING_STORE_PASSWORD }}"
