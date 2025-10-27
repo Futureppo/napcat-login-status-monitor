@@ -4,10 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
   build-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
 
     steps:
       - name: Checkout
@@ -21,6 +25,8 @@ jobs:
 
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
 
       - name: Prepare keystore and gradle.properties
         shell: bash
@@ -45,8 +51,19 @@ jobs:
       - name: Collect APKs
         run: |
           mkdir -p artifacts
-          cp app/build/outputs/apk/release/*-armeabi-v7a*.apk artifacts/app-armeabi-v7a.apk || true
-          cp app/build/outputs/apk/release/*-arm64-v8a*.apk artifacts/app-arm64-v8a.apk || true
+          echo "Listing release APK outputs:"
+          ls -R app/build/outputs/apk/release || true
+          armv7a=$(find app/build/outputs/apk/release -name "*armeabi-v7a*.apk" | head -n1)
+          arm64=$(find app/build/outputs/apk/release -name "*arm64-v8a*.apk" | head -n1)
+          if [ -n "$armv7a" ]; then cp "$armv7a" artifacts/app-armeabi-v7a.apk; else echo "armeabi-v7a apk not found"; fi
+          if [ -n "$arm64" ]; then cp "$arm64" artifacts/app-arm64-v8a.apk; else echo "arm64-v8a apk not found"; fi
+
+      - name: Upload artifacts (for debugging if release fails)
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: artifacts/*.apk
+          if-no-files-found: warn
 
       - name: Create GitHub Release
         id: create_release
