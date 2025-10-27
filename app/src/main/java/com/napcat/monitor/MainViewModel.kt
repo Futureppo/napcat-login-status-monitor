@@ -73,7 +73,7 @@ class MainViewModel(
         }
     }
 
-    // ViewModel 工厂，负责注入依赖
+    // ViewModel
     class Factory(private val app: Application) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -96,7 +96,6 @@ class MainViewModel(
                 enabled = enabled
             )
             saveMonitors(app, updated)
-            // 始终确保调度已存在
             startMonitoring()
         }
     }
