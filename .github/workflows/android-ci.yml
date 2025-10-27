@@ -1,0 +1,40 @@
+# .github/workflows/android-ci.yml
+
+name: Android CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew build
+
+    - name: Build debug APKs for all ABIs
+      run: ./gradlew assembleDebug
+
+    - name: Upload All APKs as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: debug-apks # 将产物命名为 debug-apks
+        # 使用通配符 (*) 匹配 build/outputs/apk/debug 目录下的所有 .apk 文件
+        path: app/build/outputs/apk/debug/*.apk

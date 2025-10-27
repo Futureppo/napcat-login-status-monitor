@@ -52,7 +52,6 @@ android {
             )
         }
     }
-    // 建议使用 App Bundle 方式进行设备拆分；移除过时的 splits.density/abi 配置以避免构建告警
 }
 
 kotlin {
