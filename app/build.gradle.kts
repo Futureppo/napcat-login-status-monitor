@@ -24,10 +24,18 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("keystore.jks")
-            storePassword = System.getenv("SIGNING_STORE_PASSWORD")
-            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
-            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            val storeFilePath = (findProperty("SIGNING_STORE_FILE") as String?)
+                ?: (findProperty("RELEASE_STORE_FILE") as String?)
+                ?: (findProperty("keystone.jks") as String?)
+                ?: "key.jks"
+            storeFile = file(storeFilePath)
+
+            storePassword = (findProperty("SIGNING_STORE_PASSWORD") as String?)
+                ?: System.getenv("SIGNING_STORE_PASSWORD")
+            keyAlias = (findProperty("SIGNING_KEY_ALIAS") as String?)
+                ?: System.getenv("SIGNING_KEY_ALIAS")
+            keyPassword = (findProperty("SIGNING_KEY_PASSWORD") as String?)
+                ?: System.getenv("SIGNING_KEY_PASSWORD")
         }
     }
 
