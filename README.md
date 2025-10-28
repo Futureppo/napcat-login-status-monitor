@@ -122,6 +122,3 @@ Release 构建（已启用 R8 与资源收缩）：
   - `network/HttpClientProvider.kt`：OkHttp 单例
   - `NotificationHelper.kt`：通知渠道与通知构建
 
-
-## 许可证
-
